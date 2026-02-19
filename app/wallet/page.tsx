@@ -778,7 +778,7 @@ export default function WalletPage() {
                     <Fingerprint className="h-4 w-4" />
                     Passkey Connected
                   </div>
-                  <p className="font-mono text-sm text-muted-foreground">
+                  <p className="font-mono text-sm text-muted-foreground break-all px-2">
                     {address}
                   </p>
                 </div>
