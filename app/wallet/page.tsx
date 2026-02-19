@@ -378,9 +378,9 @@ export default function WalletPage() {
   React.useEffect(() => {
     if (address) {
       const generateQR = async () => {
-        const { toDataURL } = await import('qrcode')
+        const qrcode = await import('qrcode')
         const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
-        const dataUrl = await toDataURL(eip681Url, {
+        const dataUrl = await qrcode.default.toDataURL(eip681Url, {
           width: 280,
           margin: 2,
           color: {
@@ -590,9 +590,9 @@ export default function WalletPage() {
   const handleSaveQR = async () => {
     if (!address) return
     try {
-      const { toDataURL } = await import('qrcode')
+      const qrcode = await import('qrcode')
       const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
-      const highResDataUrl = await toDataURL(eip681Url, {
+      const highResDataUrl = await qrcode.default.toDataURL(eip681Url, {
         width: 480,
         margin: 2,
         color: {
