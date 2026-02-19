@@ -1,11 +1,11 @@
 "use client"
 
-import { ArrowRight, BookOpen } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 sm:px-6 pt-20">
       {/* Background grid + glow */}
       <div className="pointer-events-none absolute inset-0">
         {/* Grid pattern */}
@@ -49,18 +49,10 @@ export function HeroSection() {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button
             size="lg"
-            className="gap-2 bg-claw-indigo px-8 text-primary-foreground hover:bg-claw-indigo-dark"
+            className="gap-2 bg-claw-indigo px-8 text-primary-foreground hover:bg-claw-indigo-dark w-full sm:w-auto"
           >
             Get Started
             <ArrowRight className="h-4 w-4" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="gap-2 border-border text-foreground hover:bg-secondary"
-          >
-            <BookOpen className="h-4 w-4" />
-            Read Documentation
           </Button>
         </div>
 
