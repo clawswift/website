@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Clawswift Wallet - Web3 Wallet with Passkey',
   description:
-    'Secure, passwordless wallet using biometric authentication. Create and manage your CLAW tokens with just your fingerprint or Face ID.',
+    'Secure, passwordless wallet using biometric authentication. Create and manage your FEE tokens with just your fingerprint or Face ID.',
   keywords: ['wallet', 'web3', 'passkey', 'clawswift', 'blockchain', 'crypto'],
   icons: {
     icon: [

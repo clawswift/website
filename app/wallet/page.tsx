@@ -73,9 +73,9 @@ interface Token {
 const tokens: Token[] = [
   {
     address: "0x20c0000000000000000000000000000000000000",
-    symbol: "CLAW",
-    name: "ClawSwift",
-    decimals: 18,
+    symbol: "FEE",
+    name: "pathFEE",
+    decimals: 6,
   },
 ]
 
@@ -93,6 +93,7 @@ function SendModal({
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [showScanner, setShowScanner] = React.useState(false)
 
+  // Read token info from RPC
   const { data: balance } = useReadContract({
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
@@ -100,10 +101,25 @@ function SendModal({
     args: [address as `0x${string}`],
   })
 
+  const { data: decimals } = useReadContract({
+    address: tokens[0].address as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'decimals',
+  })
+
+  const { data: symbol } = useReadContract({
+    address: tokens[0].address as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'symbol',
+  })
+
+  const tokenDecimals = decimals ? Number(decimals) : 6
+  const tokenSymbol = symbol || 'FEE'
+
   const formattedBalance = React.useMemo(() => {
     if (balance === undefined || balance === null) return '0.00'
-    return Number(formatUnits(balance as bigint, tokens[0].decimals)).toFixed(4)
-  }, [balance])
+    return Number(formatUnits(balance as bigint, tokenDecimals)).toFixed(4)
+  }, [balance, tokenDecimals])
 
   const { writeContract, isPending, data: hash } = useWriteContract()
 
@@ -127,7 +143,7 @@ function SendModal({
     }
 
     try {
-      const parsedAmount = parseUnits(amount, tokens[0].decimals)
+      const parsedAmount = parseUnits(amount, tokenDecimals)
 
       writeContract({
         address: tokens[0].address as `0x${string}`,
@@ -152,7 +168,7 @@ function SendModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Send CLAW</h3>
+          <h3 className="text-lg font-semibold">Send {tokenSymbol}</h3>
           <button
             onClick={onClose}
             className="text-2xl text-muted-foreground hover:text-foreground"
@@ -178,7 +194,7 @@ function SendModal({
           <div className="flex flex-col gap-4">
             <div>
               <label className="mb-1.5 block text-xs text-muted-foreground">
-                Balance: {formattedBalance} CLAW
+                Balance: {formattedBalance} {tokenSymbol}
               </label>
             </div>
 
@@ -414,6 +430,7 @@ export default function WalletPage() {
     )
   }
 
+  // Read token info from RPC
   const { data: balance } = useReadContract({
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
@@ -424,10 +441,32 @@ export default function WalletPage() {
     },
   })
 
+  const { data: decimals } = useReadContract({
+    address: tokens[0].address as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'decimals',
+    query: {
+      enabled: !!address,
+    },
+  })
+
+  const { data: symbol } = useReadContract({
+    address: tokens[0].address as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'symbol',
+    query: {
+      enabled: !!address,
+    },
+  })
+
   const formattedBalance = React.useMemo(() => {
     if (balance === undefined || balance === null) return '0.00'
-    return Number(formatUnits(balance as bigint, tokens[0].decimals)).toFixed(4)
-  }, [balance])
+    const tokenDecimals = decimals ? Number(decimals) : 6
+    return Number(formatUnits(balance as bigint, tokenDecimals)).toFixed(4)
+  }, [balance, decimals])
+
+  const tokenSymbol = symbol || 'FEE'
+  const tokenDecimals = decimals ? Number(decimals) : 6
 
   const isLoading = isConnectPending || isConnecting
 
@@ -582,7 +621,7 @@ export default function WalletPage() {
                   <p className="text-5xl font-bold">
                     {formattedBalance}
                   </p>
-                  <p className="text-xl text-claw-indigo font-medium">CLAW</p>
+                  <p className="text-xl text-claw-indigo font-medium">{tokenSymbol}</p>
                 </div>
 
                 {/* Actions */}
@@ -608,7 +647,7 @@ export default function WalletPage() {
               {/* Receive Section */}
               {qrDataUrl && (
                 <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 text-center">Receive CLAW</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-center">Receive {tokenSymbol}</h3>
                   
                   <div className="flex flex-col items-center">
                     <div className="relative mb-4">
