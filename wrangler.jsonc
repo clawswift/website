@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clawswift-website",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  // Build settings for Cloudflare Pages
+  "pages_build_output_dir": "./dist",
+  
+  // Environment variables
+  "vars": {
+    "NODE_ENV": "production"
+  }
+}

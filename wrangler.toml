@@ -1,0 +1,22 @@
+# Cloudflare Pages configuration for Clawswift Website
+name = "clawswift-website"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Build settings
+[build]
+command = "pnpm build"
+cwd = "."
+
+# Output directory for static export
+[site]
+bucket = "./dist"
+
+# Environment variables (if needed)
+[vars]
+NODE_ENV = "production"
+
+# Routes configuration
+[[routes]]
+pattern = "/*"
+zone_name = "clawswift.net"
