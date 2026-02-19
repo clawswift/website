@@ -5,11 +5,12 @@ import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
+import Link from "next/link"
+
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Economy", href: "#economy" },
   { label: "Connect", href: "#connect" },
-  { label: "Wallet", href: "#wallet" },
   { label: "Developers", href: "#developers" },
 ]
 
@@ -49,6 +50,14 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-3 md:flex">
+          <Link href="/wallet">
+            <Button
+              variant="outline"
+              className="text-sm border-claw-indigo text-claw-indigo hover:bg-claw-indigo-subtle"
+            >
+              Wallet
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             className="text-sm text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -85,6 +94,14 @@ export function Navbar() {
               </a>
             ))}
             <div className="flex flex-col gap-2 pt-4">
+              <Link href="/wallet" className="w-full" onClick={() => setMobileOpen(false)}>
+                <Button
+                  variant="outline"
+                  className="w-full border-claw-indigo text-claw-indigo hover:bg-claw-indigo-subtle"
+                >
+                  Wallet
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary"
