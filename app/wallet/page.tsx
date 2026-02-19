@@ -378,17 +378,27 @@ export default function WalletPage() {
   React.useEffect(() => {
     if (address) {
       const generateQR = async () => {
-        const qrcode = await import('qrcode')
-        const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
-        const dataUrl = await qrcode.default.toDataURL(eip681Url, {
-          width: 280,
-          margin: 2,
-          color: {
-            dark: '#f26641',
-            light: '#ffffff',
-          },
-        })
-        setQrDataUrl(dataUrl)
+        try {
+          const QRCode = await import('qrcode')
+          const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
+          // Handle both ESM and CJS exports
+          const toDataURL = QRCode.toDataURL || QRCode.default?.toDataURL
+          if (!toDataURL) {
+            console.error('QRCode toDataURL not found:', QRCode)
+            return
+          }
+          const dataUrl = await toDataURL(eip681Url, {
+            width: 280,
+            margin: 2,
+            color: {
+              dark: '#f26641',
+              light: '#ffffff',
+            },
+          })
+          setQrDataUrl(dataUrl)
+        } catch (err) {
+          console.error('QR generation error:', err)
+        }
       }
       generateQR()
     }
@@ -590,9 +600,15 @@ export default function WalletPage() {
   const handleSaveQR = async () => {
     if (!address) return
     try {
-      const qrcode = await import('qrcode')
+      const QRCode = await import('qrcode')
+      // Handle both ESM and CJS exports
+      const toDataURL = QRCode.toDataURL || QRCode.default?.toDataURL
+      if (!toDataURL) {
+        console.error('QRCode toDataURL not found:', QRCode)
+        return
+      }
       const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
-      const highResDataUrl = await qrcode.default.toDataURL(eip681Url, {
+      const highResDataUrl = await toDataURL(eip681Url, {
         width: 480,
         margin: 2,
         color: {
@@ -607,7 +623,7 @@ export default function WalletPage() {
       const ctx = canvas.getContext('2d')
 
       if (ctx) {
-        const qrImg = new Image()
+        const qrImg = document.createElement('img')
         qrImg.onload = () => {
           ctx.drawImage(qrImg, 0, 0, 480, 480)
           const logoSize = 90
@@ -619,7 +635,7 @@ export default function WalletPage() {
           ctx.fillStyle = '#ffffff'
           ctx.fill()
 
-          const logoImg = new Image()
+          const logoImg = document.createElement('img')
           logoImg.crossOrigin = 'anonymous'
           logoImg.onload = () => {
             ctx.drawImage(logoImg, centerX, centerY, logoSize, logoSize)
