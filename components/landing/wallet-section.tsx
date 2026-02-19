@@ -435,11 +435,16 @@ export function WalletSection() {
   const [initialRecipient, setInitialRecipient] = React.useState('')
   const [initialAmount, setInitialAmount] = React.useState('')
   const [isConnecting, setIsConnecting] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
 
   const { address, isConnected } = useAccount()
   const { connect, isPending: isConnectPending } = useConnect()
   const { disconnect } = useDisconnect()
   const connectors = useConnectors()
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Find webAuthn connector
   const webAuthnConnector = React.useMemo(
@@ -541,7 +546,16 @@ export function WalletSection() {
 
         {/* Wallet Card */}
         <div className="mt-12 rounded-2xl border border-border bg-card p-8 shadow-sm">
-          {!isConnected ? (
+          {/* Loading state before mounted to avoid hydration mismatch */}
+          {!mounted ? (
+            <div className="py-12 text-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-claw-indigo-subtle text-claw-indigo">
+                <Shield className="h-10 w-10" />
+              </div>
+              <h3 className="mb-2 text-xl font-semibold">Loading...</h3>
+              <p className="text-sm text-muted-foreground">Initializing wallet</p>
+            </div>
+          ) : !isConnected ? (
             <div className="py-12 text-center">
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-claw-indigo-subtle text-claw-indigo">
                 <Shield className="h-10 w-10" />
