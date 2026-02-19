@@ -73,27 +73,57 @@ function ReceiveModal({
   address: string
   onClose: () => void
 }) {
-  const [qrDataUrl, setQrDataUrl] = React.useState<string>('')
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const [isGenerating, setIsGenerating] = React.useState(true)
   const [error, setError] = React.useState<string>('')
 
   React.useEffect(() => {
     const generateQR = async () => {
+      if (!canvasRef.current) return
+
       try {
-        const { toDataURL } = await import('qrcode')
+        const { toCanvas } = await import('qrcode')
         const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
         
-        const dataUrl = await toDataURL(eip681Url, {
+        // Generate QR on canvas with orange color
+        await toCanvas(canvasRef.current, eip681Url, {
           width: 320,
           margin: 2,
           color: {
-            dark: '#0a0a0a',
+            dark: '#f26641', // Orange color
             light: '#ffffff',
           },
         })
-        
-        setQrDataUrl(dataUrl)
-        setIsGenerating(false)
+
+        // Add logo to center
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          const logoSize = 60
+          const centerX = (canvas.width - logoSize) / 2
+          const centerY = (canvas.height - logoSize) / 2
+
+          // Draw white background circle for logo
+          ctx.beginPath()
+          ctx.arc(canvas.width / 2, canvas.height / 2, logoSize / 2 + 4, 0, 2 * Math.PI)
+          ctx.fillStyle = '#ffffff'
+          ctx.fill()
+
+          // Load and draw logo
+          const logo = new Image()
+          logo.crossOrigin = 'anonymous'
+          logo.onload = () => {
+            ctx.drawImage(logo, centerX, centerY, logoSize, logoSize)
+            setIsGenerating(false)
+          }
+          logo.onerror = () => {
+            // If logo fails to load, just show QR without logo
+            setIsGenerating(false)
+          }
+          logo.src = '/lobster-logo-big.svg'
+        } else {
+          setIsGenerating(false)
+        }
       } catch (err) {
         console.error('QR generation error:', err)
         setError('Failed to generate QR code')
@@ -134,9 +164,8 @@ function ReceiveModal({
                 <span>{error}</span>
               </div>
             ) : (
-              <img
-                src={qrDataUrl}
-                alt="Receive QR Code"
+              <canvas
+                ref={canvasRef}
                 className="h-64 w-64"
               />
             )}
