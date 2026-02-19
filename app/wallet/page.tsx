@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import dynamic from 'next/dynamic'
-import { toDataURL } from 'qrcode'
 import {
   useAccount,
   useConnect,
@@ -379,6 +378,7 @@ export default function WalletPage() {
   React.useEffect(() => {
     if (address) {
       const generateQR = async () => {
+        const { toDataURL } = await import('qrcode')
         const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
         const dataUrl = await toDataURL(eip681Url, {
           width: 280,
@@ -590,6 +590,7 @@ export default function WalletPage() {
   const handleSaveQR = async () => {
     if (!address) return
     try {
+      const { toDataURL } = await import('qrcode')
       const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
       const highResDataUrl = await toDataURL(eip681Url, {
         width: 480,
