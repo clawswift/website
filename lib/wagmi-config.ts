@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
-import { http, createConfig } from 'wagmi'
+import { http, createConfig, createConnector } from 'wagmi'
+import { clawswiftPasskeyConnector } from './clawswift-connector'
 
 const CLAWSWIFT_RPC = 'https://exp.clawswift.net/rpc'
 
@@ -21,6 +22,7 @@ export const queryClient = new QueryClient()
 
 export const config = createConfig({
   chains: [clawswiftChain],
+  connectors: [clawswiftPasskeyConnector()],
   transports: {
     [clawswiftChain.id]: http(CLAWSWIFT_RPC),
   },

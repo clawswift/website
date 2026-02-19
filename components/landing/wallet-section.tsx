@@ -6,14 +6,14 @@ import { Scanner } from '@yudiel/react-qr-scanner'
 import {
   useAccount,
   useConnect,
-  useConnectors,
   useDisconnect,
   useReadContract,
   useWriteContract,
 } from 'wagmi'
 import { formatUnits, parseUnits, isAddress } from 'viem'
-import { Wallet, Send, QrCode, LogOut, Copy, Check } from "lucide-react"
+import { Wallet, Send, QrCode, LogOut, Copy, Check, Shield, Fingerprint, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { hasWallet, registerPasskey, authenticatePasskey, clearWallet } from '@/lib/clawswift-connector'
 
 const erc20Abi = [
   {
@@ -410,11 +410,50 @@ function SendModal({
 export function WalletSection() {
   const [showReceive, setShowReceive] = React.useState(false)
   const [showSend, setShowSend] = React.useState(false)
+  const [walletExists, setWalletExists] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [error, setError] = React.useState('')
 
   const { address, isConnected } = useAccount()
   const { connect, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
-  const connectors = useConnectors()
+
+  React.useEffect(() => {
+    setWalletExists(hasWallet())
+  }, [isConnected])
+
+  const handleCreateWallet = async () => {
+    setIsLoading(true)
+    setError('')
+    try {
+      await registerPasskey()
+      await connect({ connector: undefined })
+      setWalletExists(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to create wallet')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConnectWallet = async () => {
+    setIsLoading(true)
+    setError('')
+    try {
+      await authenticatePasskey()
+      await connect({ connector: undefined })
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDisconnect = () => {
+    clearWallet()
+    disconnect()
+    setWalletExists(false)
+  }
 
   const { data: balance } = useReadContract({
     address: tokens[0].address as `0x${string}`,
@@ -447,8 +486,8 @@ export function WalletSection() {
             Clawswift Wallet
           </h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-            Manage your CLAW tokens directly in your browser. Connect your wallet 
-            to send, receive, and track your assets.
+            Secure, passwordless wallet using biometric authentication.
+            Create and manage your CLAW tokens with just your fingerprint or Face ID.
           </p>
         </div>
 
@@ -456,35 +495,75 @@ export function WalletSection() {
         <div className="mt-12 rounded-2xl border border-border bg-card p-8 shadow-sm">
           {!isConnected ? (
             <div className="py-12 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo">
-                <Wallet className="h-8 w-8" />
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-claw-indigo-subtle text-claw-indigo">
+                <Shield className="h-10 w-10" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Connect Your Wallet</h3>
-              <p className="mb-6 text-sm text-muted-foreground">
-                Connect to access your CLAW tokens and manage your assets
-              </p>
-              <Button
-                onClick={() => connect({ connector: connectors[0] })}
-                disabled={isConnecting}
-                className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-              </Button>
+              
+              {!walletExists ? (
+                // Create new wallet flow
+                <>
+                  <h3 className="mb-2 text-xl font-semibold">Create Your Wallet</h3>
+                  <p className="mb-6 text-sm text-muted-foreground">
+                    Create a secure wallet using your device&apos;s biometric authentication.
+                    No passwords needed - just use Touch ID or Face ID.
+                  </p>
+                  <div className="flex flex-col items-center gap-3">
+                    <Button
+                      onClick={handleCreateWallet}
+                      disabled={isLoading}
+                      className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
+                    >
+                      <Fingerprint className="h-5 w-5" />
+                      {isLoading ? 'Creating...' : 'Create Wallet with Passkey'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Supports Touch ID, Face ID, and Windows Hello
+                    </p>
+                  </div>
+                </>
+              ) : (
+                // Connect existing wallet flow
+                <>
+                  <h3 className="mb-2 text-xl font-semibold">Welcome Back</h3>
+                  <p className="mb-6 text-sm text-muted-foreground">
+                    Your wallet is ready. Authenticate with your biometric to access it.
+                  </p>
+                  <Button
+                    onClick={handleConnectWallet}
+                    disabled={isLoading}
+                    className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
+                  >
+                    <Fingerprint className="h-5 w-5" />
+                    {isLoading ? 'Authenticating...' : 'Unlock with Passkey'}
+                  </Button>
+                </>
+              )}
+              
+              {error && (
+                <div className="mt-4 rounded-md bg-red-50 px-4 py-2 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
             </div>
           ) : (
             <div>
               {/* Wallet Header */}
               <div className="mb-8 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Connected Address</p>
-                  <p className="font-mono text-sm">
-                    {address?.slice(0, 6)}...{address?.slice(-4)}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                    <Fingerprint className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Passkey Connected</p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {address?.slice(0, 6)}...{address?.slice(-4)}
+                    </p>
+                  </div>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => disconnect()}
+                  onClick={handleDisconnect}
                   className="gap-2"
                 >
                   <LogOut className="h-4 w-4" />
@@ -520,6 +599,37 @@ export function WalletSection() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Features Grid */}
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo">
+              <Fingerprint className="h-6 w-6" />
+            </div>
+            <h4 className="mb-2 font-semibold">Passkey Security</h4>
+            <p className="text-sm text-muted-foreground">
+              No passwords to remember. Use your device&apos;s biometric authentication.
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo">
+              <Shield className="h-6 w-6" />
+            </div>
+            <h4 className="mb-2 font-semibold">Non-Custodial</h4>
+            <p className="text-sm text-muted-foreground">
+              You own your keys. We never store your private key on our servers.
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo">
+              <QrCode className="h-6 w-6" />
+            </div>
+            <h4 className="mb-2 font-semibold">QR Payments</h4>
+            <p className="text-sm text-muted-foreground">
+              Send and receive CLAW by scanning QR codes. Fast and easy.
+            </p>
+          </div>
         </div>
       </div>
 
