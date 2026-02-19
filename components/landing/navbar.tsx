@@ -14,11 +14,11 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-claw-teal/20 text-claw-teal">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-claw-indigo-subtle text-claw-indigo">
             <Zap className="h-5 w-5" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
@@ -48,7 +48,7 @@ export function Navbar() {
           >
             Read Docs
           </Button>
-          <Button className="bg-claw-teal text-primary-foreground hover:bg-claw-teal-light text-sm">
+          <Button className="bg-claw-indigo text-primary-foreground hover:bg-claw-indigo-dark text-sm">
             Get Started
           </Button>
         </div>
@@ -65,7 +65,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="border-t border-border/50 bg-background/95 backdrop-blur-xl md:hidden">
+        <div className="border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-4 px-6 py-6">
             {navLinks.map((link) => (
               <a
@@ -84,7 +84,7 @@ export function Navbar() {
               >
                 Read Docs
               </Button>
-              <Button className="w-full bg-claw-teal text-primary-foreground hover:bg-claw-teal-light">
+              <Button className="w-full bg-claw-indigo text-primary-foreground hover:bg-claw-indigo-dark">
                 Get Started
               </Button>
             </div>

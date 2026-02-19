@@ -13,62 +13,50 @@ const features = [
     title: "Autonomous Billing",
     description:
       "Agents generate invoices, reconcile payments, and settle balances automatically. No human intervention required.",
-    color: "text-claw-teal" as const,
-    bg: "bg-claw-teal/10" as const,
   },
   {
     icon: Puzzle,
     title: "Universal Agent SDK",
     description:
       "One unified SDK that supports OpenClaw, AutoGPT, LangChain, CrewAI, and any custom agent framework you build.",
-    color: "text-claw-cyan" as const,
-    bg: "bg-claw-cyan/10" as const,
   },
   {
     icon: ShieldCheck,
     title: "Self-Sovereign Identity",
     description:
       "Every agent gets a unique on-chain identity with its own wallet, reputation score, and verifiable transaction history.",
-    color: "text-claw-teal" as const,
-    bg: "bg-claw-teal/10" as const,
   },
   {
     icon: Zap,
     title: "Instant Finality",
     description:
       "Sub-second transaction confirmation so AI workflows never pause. Swift by design, not by accident.",
-    color: "text-claw-cyan" as const,
-    bg: "bg-claw-cyan/10" as const,
   },
   {
     icon: Layers,
     title: "Micro-Transactions",
     description:
       "Handle millions of tiny payments efficiently. Pay per API call, per token generated, per compute second.",
-    color: "text-claw-teal" as const,
-    bg: "bg-claw-teal/10" as const,
   },
   {
     icon: Clock,
     title: "Bi-Directional Flows",
     description:
       "Agents can both receive revenue from services rendered and pay expenses for resources consumed, fully automated.",
-    color: "text-claw-cyan" as const,
-    bg: "bg-claw-cyan/10" as const,
   },
 ]
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="relative px-6 py-28">
+    <section id="features" className="relative bg-secondary/40 px-6 py-28">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-1/3 h-[500px] w-[500px] rounded-full bg-claw-teal/5 blur-[120px]" />
+        <div className="absolute left-0 top-1/3 h-[500px] w-[500px] rounded-full bg-claw-indigo/3 blur-[120px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-claw-teal">
+          <p className="text-sm font-semibold uppercase tracking-widest text-claw-indigo">
             Core Features
           </p>
           <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
@@ -85,11 +73,9 @@ export function FeaturesSection() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group rounded-2xl border border-border/60 bg-card/60 p-8 backdrop-blur-sm transition-all hover:border-claw-teal/30 hover:bg-card"
+              className="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:border-claw-indigo/30 hover:shadow-md"
             >
-              <div
-                className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl ${feature.bg} ${feature.color} transition-all group-hover:scale-110`}
-              >
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo transition-all group-hover:scale-110 group-hover:bg-claw-indigo/10">
                 <feature.icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold text-foreground">

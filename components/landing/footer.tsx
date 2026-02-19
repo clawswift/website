@@ -40,13 +40,13 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 px-6 py-16">
+    <footer className="border-t border-border px-6 py-16">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-1">
             <a href="#" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-claw-teal/20 text-claw-teal">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-claw-indigo-subtle text-claw-indigo">
                 <Zap className="h-4 w-4" />
               </div>
               <span className="text-lg font-bold text-foreground">
@@ -84,7 +84,7 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Clawswift. All rights reserved.
           </p>
