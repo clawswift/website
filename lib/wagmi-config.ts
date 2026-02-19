@@ -22,6 +22,10 @@ export const clawswiftChain = {
 export const queryClient = new QueryClient()
 
 export const config = createConfig({
+  // Disable SSR for proper Next.js hydration
+  ssr: true,
+  // Disable auto-discovery of injected providers
+  multiInjectedProviderDiscovery: false,
   connectors: [
     webAuthn({
       keyManager: KeyManager.http(KEY_MANAGER_URL),

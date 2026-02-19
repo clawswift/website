@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
+import { clawswiftChain } from "@/lib/wagmi-config"
 
 // Dynamic import QR Scanner to avoid SSR issues
 const Scanner = dynamic(
@@ -79,8 +80,8 @@ interface Token {
 const tokens: Token[] = [
   {
     address: "0x20c0000000000000000000000000000000000000",
-    symbol: "FEE",
-    name: "pathFEE",
+    symbol: "CLAW",
+    name: "ClawSwift Token",
     decimals: 6,
   },
 ]
@@ -101,6 +102,7 @@ function SendModal({
 
   // Read token info from RPC
   const { data: balance } = useReadContract({
+    chainId: clawswiftChain.id,
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -108,19 +110,21 @@ function SendModal({
   })
 
   const { data: decimals } = useReadContract({
+    chainId: clawswiftChain.id,
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
     functionName: 'decimals',
   })
 
   const { data: symbol } = useReadContract({
+    chainId: clawswiftChain.id,
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
     functionName: 'symbol',
   })
 
   const tokenDecimals = decimals ? Number(decimals) : 6
-  const tokenSymbol = symbol || 'FEE'
+  const tokenSymbol = symbol || 'CLAW'
 
   const formattedBalance = React.useMemo(() => {
     if (balance === undefined || balance === null) return '0.00'
@@ -152,6 +156,7 @@ function SendModal({
       const parsedAmount = parseUnits(amount, tokenDecimals)
 
       writeContract({
+        chainId: clawswiftChain.id,
         address: tokens[0].address as `0x${string}`,
         abi: erc20Abi,
         functionName: 'transfer',
@@ -362,6 +367,10 @@ export default function WalletPage() {
   const [showSend, setShowSend] = React.useState(false)
   const [isConnecting, setIsConnecting] = React.useState(false)
   const [qrDataUrl, setQrDataUrl] = React.useState<string>('')
+  const [wsStatus, setWsStatus] = React.useState<'connecting' | 'connected' | 'disconnected'>('disconnected')
+  const [retryCount, setRetryCount] = React.useState(0)
+  const maxRetries = 5
+  const retryDelayRef = React.useRef(1000) // Start with 1s, exponential backoff
 
   const { address, isConnected } = useAccount()
   const { connect, isPending: isConnectPending } = useConnect()
@@ -410,7 +419,7 @@ export default function WalletPage() {
     setIsConnecting(true)
 
     connect(
-      { connector: webAuthnConnector },
+      { connector: webAuthnConnector, chainId: clawswiftChain.id },
       {
         onError: (error) => {
           const errorMessage =
@@ -432,6 +441,7 @@ export default function WalletPage() {
             connect(
               {
                 connector: webAuthnConnector,
+                chainId: clawswiftChain.id,
                 capabilities: { type: 'sign-up' },
               },
               {
@@ -482,7 +492,7 @@ export default function WalletPage() {
     return Number(formatUnits(balance as bigint, tokenDecimals)).toFixed(4)
   }, [balance, decimals])
 
-  const tokenSymbol = symbol || 'FEE'
+  const tokenSymbol = symbol || 'CLAW'
   const tokenDecimals = decimals ? Number(decimals) : 6
 
   const isLoading = isConnectPending || isConnecting
@@ -521,80 +531,117 @@ export default function WalletPage() {
     }
   }
 
+  // WebSocket connection with auto-retry
   React.useEffect(() => {
     if (!address) return
 
-    const wsUrl = 'wss://exp.clawswift.net/ws'
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
+    let ws: WebSocket | null = null
+    let reconnectTimeout: NodeJS.Timeout | null = null
+    let isIntentionalClose = false
 
-    ws.onopen = () => {
-      // Subscribe to ERC20 Transfer events for the token
-      // Transfer event signature: keccak256("Transfer(address,address,uint256)")
-      const transferEventSignature = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-      const addressPadded = `0x${address.toLowerCase().slice(2).padStart(64, '0')}`
+    const connectWebSocket = () => {
+      setWsStatus('connecting')
+      const wsUrl = 'wss://exp.clawswift.net/ws'
+      ws = new WebSocket(wsUrl)
+      wsRef.current = ws
 
-      ws.send(
-        JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'eth_subscribe',
-          params: [
-            'logs',
-            {
-              address: tokens[0].address,
-              topics: [
-                transferEventSignature, // Event signature
-                null, // From: any
-                addressPadded, // To: our address
-              ],
-            },
-          ],
-        }),
-      )
-    }
+      ws.onopen = () => {
+        setWsStatus('connected')
+        setRetryCount(0)
+        retryDelayRef.current = 1000 // Reset delay on successful connection
+        
+        // Subscribe to ERC20 Transfer events for the token
+        // Transfer event signature: keccak256("Transfer(address,address,uint256)")
+        const transferEventSignature = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+        const addressPadded = `0x${address.toLowerCase().slice(2).padStart(64, '0')}`
 
-    ws.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.method === 'eth_subscription' && data.params?.result) {
-          const log = data.params.result
-          const txHash = log.transactionHash
+        ws?.send(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_subscribe',
+            params: [
+              'logs',
+              {
+                address: tokens[0].address,
+                topics: [
+                  transferEventSignature, // Event signature
+                  null, // From: any
+                  addressPadded, // To: our address
+                ],
+              },
+            ],
+          }),
+        )
+      }
 
-          if (!seenTxRef.current.has(txHash)) {
-            seenTxRef.current.add(txHash)
+      ws.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.method === 'eth_subscription' && data.params?.result) {
+            const log = data.params.result
+            const txHash = log.transactionHash
 
-            // Decode amount from data (uint256 at position 0)
-            const amountHex = log.data
-            const amount = formatUnits(BigInt(amountHex), tokenDecimals)
+            if (!seenTxRef.current.has(txHash)) {
+              seenTxRef.current.add(txHash)
 
-            setIncomingTx({
-              hash: txHash,
-              amount: Number(amount).toFixed(4),
-              symbol: tokenSymbol,
-            })
-            playBeep()
+              // Decode amount from data (uint256 at position 0)
+              const amountHex = log.data
+              const amount = formatUnits(BigInt(amountHex), tokenDecimals)
 
-            // Clear notification after 10 seconds
-            setTimeout(() => {
-              setIncomingTx(null)
-            }, 10000)
+              setIncomingTx({
+                hash: txHash,
+                amount: Number(amount).toFixed(4),
+                symbol: tokenSymbol,
+              })
+              playBeep()
+
+              // Clear notification after 10 seconds
+              setTimeout(() => {
+                setIncomingTx(null)
+              }, 10000)
+            }
           }
+        } catch {
+          // Ignore parsing errors
         }
-      } catch {
-        // Ignore parsing errors
+      }
+
+      ws.onerror = () => {
+        // Error handled in onclose
+      }
+
+      ws.onclose = () => {
+        if (isIntentionalClose) return
+        
+        setWsStatus('disconnected')
+        wsRef.current = null
+
+        // Auto-retry with exponential backoff
+        if (retryCount < maxRetries) {
+          const delay = retryDelayRef.current
+          retryDelayRef.current = Math.min(delay * 2, 30000) // Max 30s delay
+          
+          setRetryCount(prev => prev + 1)
+          
+          reconnectTimeout = setTimeout(() => {
+            connectWebSocket()
+          }, delay)
+        }
       }
     }
 
-    ws.onerror = () => {
-      // Ignore WebSocket errors
-    }
+    connectWebSocket()
 
     return () => {
-      ws.close()
+      isIntentionalClose = true
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout)
+      }
+      ws?.close()
       wsRef.current = null
     }
-  }, [address, tokenDecimals, tokenSymbol])
+  }, [address, tokenDecimals, tokenSymbol, retryCount])
 
   // Save QR as PNG
   const handleSaveQR = async () => {
@@ -789,7 +836,33 @@ export default function WalletPage() {
                   <p className="text-5xl font-bold">
                     {formattedBalance}
                   </p>
-                  <p className="text-xl text-claw-indigo font-medium">{tokenSymbol}</p>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <p className="text-xl text-claw-indigo font-medium">{tokenSymbol}</p>
+                    {/* WebSocket Status Indicator */}
+                    <span 
+                      className={`flex h-2 w-2 rounded-full ${
+                        wsStatus === 'connected' 
+                          ? 'bg-green-500' 
+                          : wsStatus === 'connecting' 
+                            ? 'bg-yellow-500 animate-pulse' 
+                            : 'bg-red-500'
+                      }`}
+                      title={
+                        wsStatus === 'connected' 
+                          ? 'Real-time notifications: Connected' 
+                          : wsStatus === 'connecting' 
+                            ? 'Real-time notifications: Connecting...' 
+                            : 'Real-time notifications: Disconnected - Balance may be outdated'
+                      }
+                    />
+                  </div>
+                  {wsStatus === 'disconnected' && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {retryCount >= maxRetries 
+                        ? 'Connection failed. Please refresh the page.' 
+                        : `Reconnecting... (${retryCount}/${maxRetries})`}
+                    </p>
+                  )}
                 </div>
 
                 {/* Actions */}
