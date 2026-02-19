@@ -46,7 +46,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <a href="#" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neon-purple/20 text-neon-purple">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-claw-teal/20 text-claw-teal">
                 <Zap className="h-4 w-4" />
               </div>
               <span className="text-lg font-bold text-foreground">

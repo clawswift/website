@@ -36,13 +36,13 @@ export function EconomySection() {
   return (
     <section id="economy" className="relative px-6 py-28">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-electric-blue/5 blur-[120px]" />
+        <div className="absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-claw-cyan/5 blur-[120px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-electric-blue">
+          <p className="text-sm font-semibold uppercase tracking-widest text-claw-cyan">
             How It Works
           </p>
           <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
@@ -59,13 +59,13 @@ export function EconomySection() {
           {steps.map((step, index) => (
             <div
               key={step.title}
-              className="group relative rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm transition-all hover:border-neon-purple/40 hover:bg-card"
+              className="group relative rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm transition-all hover:border-claw-teal/40 hover:bg-card"
             >
               {/* Step number */}
-              <span className="absolute -top-3 -left-3 flex h-7 w-7 items-center justify-center rounded-full bg-neon-purple text-xs font-bold text-primary-foreground">
+              <span className="absolute -top-3 -left-3 flex h-7 w-7 items-center justify-center rounded-full bg-claw-teal text-xs font-bold text-primary-foreground">
                 {index + 1}
               </span>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple transition-colors group-hover:bg-neon-purple/20">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-teal/10 text-claw-teal transition-colors group-hover:bg-claw-teal/20">
                 <step.icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold text-foreground">

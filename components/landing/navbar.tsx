@@ -18,7 +18,7 @@ export function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neon-purple/20 text-neon-purple">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-claw-teal/20 text-claw-teal">
             <Zap className="h-5 w-5" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
@@ -48,7 +48,7 @@ export function Navbar() {
           >
             Read Docs
           </Button>
-          <Button className="bg-neon-purple text-primary-foreground hover:bg-neon-purple-light text-sm">
+          <Button className="bg-claw-teal text-primary-foreground hover:bg-claw-teal-light text-sm">
             Get Started
           </Button>
         </div>
@@ -84,7 +84,7 @@ export function Navbar() {
               >
                 Read Docs
               </Button>
-              <Button className="w-full bg-neon-purple text-primary-foreground hover:bg-neon-purple-light">
+              <Button className="w-full bg-claw-teal text-primary-foreground hover:bg-claw-teal-light">
                 Get Started
               </Button>
             </div>

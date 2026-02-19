@@ -86,14 +86,14 @@ export function DeveloperSection() {
   return (
     <section id="developers" className="relative px-6 py-28">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute bottom-0 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-neon-purple/5 blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-claw-teal/5 blur-[120px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl">
         <div className="grid items-center gap-16 lg:grid-cols-2">
           {/* Left - text */}
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-electric-blue">
+            <p className="text-sm font-semibold uppercase tracking-widest text-claw-cyan">
               Developer SDK
             </p>
             <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -116,7 +116,7 @@ export function DeveloperSection() {
                   key={item}
                   className="flex items-center gap-3 text-sm text-muted-foreground"
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neon-purple/20 text-neon-purple">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-claw-teal/20 text-claw-teal">
                     <Check className="h-3 w-3" />
                   </span>
                   {item}
@@ -125,7 +125,7 @@ export function DeveloperSection() {
             </ul>
 
             <div className="mt-8">
-              <Button className="gap-2 bg-neon-purple text-primary-foreground hover:bg-neon-purple-light">
+              <Button className="gap-2 bg-claw-teal text-primary-foreground hover:bg-claw-teal-light">
                 <Terminal className="h-4 w-4" />
                 View Full Docs
               </Button>
@@ -142,7 +142,7 @@ export function DeveloperSection() {
                   onClick={() => setActiveTab(i)}
                   className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
                     activeTab === i
-                      ? "border-b-2 border-neon-purple bg-secondary/60 text-foreground"
+                      ? "border-b-2 border-claw-teal bg-secondary/60 text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -196,20 +196,20 @@ function highlightSyntax(line: string): string {
     // strings
     .replace(
       /(&quot;|")(.*?)(&quot;|")/g,
-      '<span style="color:#22d3ee">$1$2$3</span>'
+      '<span style="color:#2dd4bf">$1$2$3</span>'
     )
     .replace(
       /(`)(.*?)(`)/g,
-      '<span style="color:#22d3ee">$1$2$3</span>'
+      '<span style="color:#2dd4bf">$1$2$3</span>'
     )
     // keywords
     .replace(
       /\b(import|from|const|await|async|console|true|false)\b/g,
-      '<span style="color:#a78bfa">$1</span>'
+      '<span style="color:#06b6d4">$1</span>'
     )
     // comments
     .replace(
       /(\/\/.*)/g,
-      '<span style="color:#4a4a6a">$1</span>'
+      '<span style="color:#3a5e5e">$1</span>'
     )
 }

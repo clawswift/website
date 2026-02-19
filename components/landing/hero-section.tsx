@@ -13,21 +13,21 @@ export function HeroSection() {
           className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)",
+              "linear-gradient(rgba(20,184,166,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.4) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
         {/* Radial glow - Purple */}
-        <div className="absolute top-1/4 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neon-purple/10 blur-[120px]" />
+        <div className="absolute top-1/4 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-claw-teal/10 blur-[120px]" />
         {/* Radial glow - Blue */}
-        <div className="absolute top-2/3 left-1/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-electric-blue/8 blur-[100px]" />
+        <div className="absolute top-2/3 left-1/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-claw-cyan/8 blur-[100px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-4xl text-center">
         {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-neon-purple/30 bg-neon-purple/10 px-4 py-1.5">
-          <span className="h-2 w-2 rounded-full bg-neon-purple animate-pulse" />
-          <span className="text-sm font-medium text-neon-purple-light">
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-claw-teal/30 bg-claw-teal/10 px-4 py-1.5">
+          <span className="h-2 w-2 rounded-full bg-claw-teal animate-pulse" />
+          <span className="text-sm font-medium text-claw-teal-light">
             Beyond Talk, Swift Action.
           </span>
         </div>
@@ -35,7 +35,7 @@ export function HeroSection() {
         {/* Headline */}
         <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
           The Financial Layer for{" "}
-          <span className="bg-gradient-to-r from-neon-purple via-electric-blue to-electric-blue-light bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-claw-teal via-claw-cyan to-claw-cyan-light bg-clip-text text-transparent">
             Autonomous AI Agents
           </span>
         </h1>
@@ -50,7 +50,7 @@ export function HeroSection() {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button
             size="lg"
-            className="gap-2 bg-neon-purple px-8 text-primary-foreground hover:bg-neon-purple-light"
+            className="gap-2 bg-claw-teal px-8 text-primary-foreground hover:bg-claw-teal-light"
           >
             Get Started
             <ArrowRight className="h-4 w-4" />
