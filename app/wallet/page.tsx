@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from 'react'
-import { toCanvas, toDataURL } from 'qrcode'
-import { Scanner } from '@yudiel/react-qr-scanner'
+import dynamic from 'next/dynamic'
+import { toDataURL } from 'qrcode'
 import {
   useAccount,
   useConnect,
@@ -28,6 +28,12 @@ import {
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
+
+// Dynamic import QR Scanner to avoid SSR issues
+const Scanner = dynamic(
+  () => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner),
+  { ssr: false }
+)
 
 const erc20Abi = [
   {
@@ -469,6 +475,12 @@ export default function WalletPage() {
   const tokenDecimals = decimals ? Number(decimals) : 6
 
   const isLoading = isConnectPending || isConnecting
+  
+  // Prevent hydration mismatch
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Save QR as PNG
   const handleSaveQR = async () => {
@@ -524,6 +536,20 @@ export default function WalletPage() {
     } catch (err) {
       console.error('Save QR error:', err)
     }
+  }
+
+  // Prevent hydration mismatch - show simple loading state
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-claw-indigo-subtle text-claw-indigo animate-pulse">
+            <Wallet className="h-6 w-6" />
+          </div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
