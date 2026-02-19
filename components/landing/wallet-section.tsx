@@ -135,7 +135,7 @@ function ReceiveModal({
                 <span>{error}</span>
               </div>
             ) : (
-              <div className="relative h-64 w-64">
+              <div className="relative h-64 w-64" id="qr-code-container">
                 <img
                   src={qrDataUrl}
                   alt="Receive QR Code"
@@ -158,6 +158,86 @@ function ReceiveModal({
               </div>
             )}
           </div>
+          
+          {/* Save QR Button */}
+          {!isGenerating && !error && qrDataUrl && (
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const qrcode = await import('qrcode')
+                  const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
+                  
+                  // Generate high-res QR (480x480)
+                  const highResDataUrl = await qrcode.toDataURL(eip681Url, {
+                    width: 480,
+                    margin: 2,
+                    color: {
+                      dark: '#f26641',
+                      light: '#ffffff',
+                    },
+                  })
+                  
+                  // Create a canvas to combine QR and logo
+                  const canvas = document.createElement('canvas')
+                  canvas.width = 480
+                  canvas.height = 480
+                  const ctx = canvas.getContext('2d')
+                  
+                  if (ctx) {
+                    // Draw QR code
+                    const qrImg = new Image()
+                    qrImg.onload = () => {
+                      ctx.drawImage(qrImg, 0, 0, 480, 480)
+                      
+                      // Draw logo
+                      const logoSize = 90
+                      const centerX = (480 - logoSize) / 2
+                      const centerY = (480 - logoSize) / 2
+                      
+                      // White background circle
+                      ctx.beginPath()
+                      ctx.arc(240, 240, logoSize / 2 + 6, 0, 2 * Math.PI)
+                      ctx.fillStyle = '#ffffff'
+                      ctx.fill()
+                      
+                      // Logo
+                      const logoImg = new Image()
+                      logoImg.crossOrigin = 'anonymous'
+                      logoImg.onload = () => {
+                        ctx.drawImage(logoImg, centerX, centerY, logoSize, logoSize)
+                        
+                        // Download
+                        const link = document.createElement('a')
+                        link.download = `clawswift-receive-${address.slice(0, 8)}.png`
+                        link.href = canvas.toDataURL('image/png')
+                        link.click()
+                      }
+                      logoImg.onerror = () => {
+                        // Download without logo
+                        const link = document.createElement('a')
+                        link.download = `clawswift-receive-${address.slice(0, 8)}.png`
+                        link.href = canvas.toDataURL('image/png')
+                        link.click()
+                      }
+                      logoImg.src = '/lobster-logo-big.svg'
+                    }
+                    qrImg.src = highResDataUrl
+                  }
+                } catch (err) {
+                  console.error('Save QR error:', err)
+                }
+              }}
+              className="gap-2"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Save QR (480×480)
+            </Button>
+          )}
 
           <p className="mb-2 text-sm text-muted-foreground">Wallet Address</p>
           <p className="mb-4 break-all text-center font-mono text-sm">
