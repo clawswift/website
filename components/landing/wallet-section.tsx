@@ -109,21 +109,26 @@ function ReceiveModal({
           ctx.fillStyle = '#ffffff'
           ctx.fill()
 
-          // Load and draw logo
-          const logo = new Image()
-          logo.crossOrigin = 'anonymous'
-          logo.onload = () => {
-            ctx.drawImage(logo, centerX, centerY, logoSize, logoSize)
-            setIsGenerating(false)
-          }
-          logo.onerror = () => {
-            // If logo fails to load, just show QR without logo
-            setIsGenerating(false)
-          }
-          logo.src = '/lobster-logo-big.svg'
-        } else {
-          setIsGenerating(false)
+          // Load and draw logo with timeout
+          const loadLogo = new Promise<void>((resolve) => {
+            const logo = new Image()
+            logo.crossOrigin = 'anonymous'
+            logo.onload = () => {
+              ctx.drawImage(logo, centerX, centerY, logoSize, logoSize)
+              resolve()
+            }
+            logo.onerror = () => {
+              resolve() // Continue even if logo fails
+            }
+            // Timeout after 2 seconds
+            setTimeout(() => resolve(), 2000)
+            logo.src = '/lobster-logo-big.svg'
+          })
+
+          await loadLogo
         }
+        
+        setIsGenerating(false)
       } catch (err) {
         console.error('QR generation error:', err)
         setError('Failed to generate QR code')
