@@ -58,12 +58,6 @@ export function Navbar() {
               Wallet
             </Button>
           </Link>
-          <Button
-            variant="ghost"
-            className="text-sm text-muted-foreground hover:text-foreground hover:bg-secondary"
-          >
-            Read Docs
-          </Button>
           <Button className="bg-claw-indigo text-primary-foreground hover:bg-claw-indigo-dark text-sm">
             Get Started
           </Button>
@@ -102,12 +96,6 @@ export function Navbar() {
                   Wallet
                 </Button>
               </Link>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary"
-              >
-                Read Docs
-              </Button>
               <Button className="w-full bg-claw-indigo text-primary-foreground hover:bg-claw-indigo-dark">
                 Get Started
               </Button>
