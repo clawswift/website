@@ -9,7 +9,9 @@ import {
   useDisconnect,
   useReadContract,
   useWriteContract,
+  useWaitForTransactionReceipt,
 } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import { formatUnits, parseUnits, isAddress } from 'viem'
 import { 
   ArrowLeft, 
@@ -90,9 +92,11 @@ const tokens: Token[] = [
 function SendModal({
   address,
   onClose,
+  onSuccess,
 }: {
   address: string
   onClose: () => void
+  onSuccess?: () => void
 }) {
   const [recipient, setRecipient] = React.useState('')
   const [amount, setAmount] = React.useState('')
@@ -100,13 +104,17 @@ function SendModal({
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [showScanner, setShowScanner] = React.useState(false)
 
-  // Read token info from RPC
-  const { data: balance } = useReadContract({
+  // Read token info from RPC with polling every 15 seconds
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     chainId: clawswiftChain.id,
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: [address as `0x${string}`],
+    query: {
+      refetchInterval: 15000, // Poll every 15 seconds
+      refetchOnWindowFocus: true,
+    },
   })
 
   const { data: decimals } = useReadContract({
@@ -123,6 +131,11 @@ function SendModal({
     functionName: 'symbol',
   })
 
+  // Refresh balance helper for this modal
+  const refreshBalance = React.useCallback(() => {
+    refetchBalance()
+  }, [refetchBalance])
+
   const tokenDecimals = decimals ? Number(decimals) : 6
   const tokenSymbol = symbol || 'CLAW'
 
@@ -132,6 +145,19 @@ function SendModal({
   }, [balance, tokenDecimals])
 
   const { writeContract, isPending, data: hash } = useWriteContract()
+  
+  // Wait for transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
+  
+  // Refresh balance when transaction is confirmed
+  React.useEffect(() => {
+    if (isConfirmed) {
+      refreshBalance()
+      onSuccess?.() // Also notify parent component
+    }
+  }, [isConfirmed, refreshBalance, onSuccess])
 
   const handleSend = () => {
     setError('')
@@ -320,10 +346,10 @@ function SendModal({
 
             <Button
               onClick={handleSend}
-              disabled={isPending}
+              disabled={isPending || isConfirming}
               className="w-full bg-claw-indigo hover:bg-claw-indigo-dark"
             >
-              {isPending ? 'Sending...' : 'Send'}
+              {isConfirming ? 'Confirming...' : isPending ? 'Sending...' : 'Send'}
             </Button>
           </div>
         )}
@@ -372,6 +398,7 @@ export default function WalletPage() {
   const maxRetries = 5
   const retryDelayRef = React.useRef(1000) // Start with 1s, exponential backoff
 
+  const queryClient = useQueryClient()
   const { address, isConnected } = useAccount()
   const { connect, isPending: isConnectPending } = useConnect()
   const { disconnect } = useDisconnect()
@@ -457,14 +484,16 @@ export default function WalletPage() {
     )
   }
 
-  // Read token info from RPC
-  const { data: balance } = useReadContract({
+  // Read token info from RPC with polling every 15 seconds
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     address: tokens[0].address as `0x${string}`,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 15000, // Poll every 15 seconds
+      refetchOnWindowFocus: true,
     },
   })
 
@@ -494,6 +523,13 @@ export default function WalletPage() {
 
   const tokenSymbol = symbol || 'CLAW'
   const tokenDecimals = decimals ? Number(decimals) : 6
+
+  // Refresh balance helper - used by WebSocket and SendModal
+  const refreshBalance = React.useCallback(() => {
+    refetchBalance()
+    // Also invalidate and refetch all balance queries
+    queryClient.invalidateQueries({ queryKey: ['readContract'] })
+  }, [refetchBalance, queryClient])
 
   const isLoading = isConnectPending || isConnecting
   
@@ -595,6 +631,9 @@ export default function WalletPage() {
                 symbol: tokenSymbol,
               })
               playBeep()
+              
+              // Refresh balance immediately when receiving tokens
+              refreshBalance()
 
               // Clear notification after 10 seconds
               setTimeout(() => {
@@ -641,7 +680,7 @@ export default function WalletPage() {
       ws?.close()
       wsRef.current = null
     }
-  }, [address, tokenDecimals, tokenSymbol, retryCount])
+  }, [address, tokenDecimals, tokenSymbol, retryCount, refreshBalance])
 
   // Save QR as PNG
   const handleSaveQR = async () => {
@@ -967,7 +1006,11 @@ export default function WalletPage() {
 
       {/* Send Modal */}
       {showSend && address && (
-        <SendModal address={address} onClose={() => setShowSend(false)} />
+        <SendModal 
+          address={address} 
+          onClose={() => setShowSend(false)} 
+          onSuccess={refreshBalance}
+        />
       )}
     </div>
   )
