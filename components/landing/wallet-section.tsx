@@ -445,7 +445,7 @@ export function WalletSection() {
     setIsConnecting(true)
 
     // Try sign in first - if no credential, will auto create
-    connect.connect(
+    connect(
       { connector: webAuthnConnector },
       {
         onError: (error) => {
@@ -467,7 +467,7 @@ export function WalletSection() {
             errorMessage.toLowerCase().includes('not found') ||
             errorMessage.toLowerCase().includes('discover')
           ) {
-            connect.connect(
+            connect(
               {
                 connector: webAuthnConnector,
                 // @ts-expect-error - capabilities is supported at runtime
