@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/landing/hero-section"
 import { EconomySection } from "@/components/landing/economy-section"
 import { FeaturesSection } from "@/components/landing/features-section"
 import { ConnectSection } from "@/components/landing/connect-section"
+import { WalletSection } from "@/components/landing/wallet-section"
 import { DeveloperSection } from "@/components/landing/developer-section"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
@@ -15,6 +16,7 @@ export default function Home() {
       <EconomySection />
       <FeaturesSection />
       <ConnectSection />
+      <WalletSection />
       <DeveloperSection />
       <CTASection />
       <Footer />
