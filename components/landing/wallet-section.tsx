@@ -73,27 +73,30 @@ function ReceiveModal({
   address: string
   onClose: () => void
 }) {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const [qrDataUrl, setQrDataUrl] = React.useState<string>('')
   const [isGenerating, setIsGenerating] = React.useState(true)
+  const [error, setError] = React.useState<string>('')
 
   React.useEffect(() => {
     const generateQR = async () => {
-      if (!canvasRef.current) return
-
       try {
+        const { toDataURL } = await import('qrcode')
         const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
-
-        await toCanvas(canvasRef.current, eip681Url, {
+        
+        const dataUrl = await toDataURL(eip681Url, {
           width: 320,
-          margin: 4,
+          margin: 2,
           color: {
             dark: '#0a0a0a',
             light: '#ffffff',
           },
         })
-
+        
+        setQrDataUrl(dataUrl)
         setIsGenerating(false)
-      } catch {
+      } catch (err) {
+        console.error('QR generation error:', err)
+        setError('Failed to generate QR code')
         setIsGenerating(false)
       }
     }
@@ -126,9 +129,14 @@ function ReceiveModal({
               <div className="flex h-64 w-64 items-center justify-center">
                 <span className="text-muted-foreground">Generating...</span>
               </div>
+            ) : error ? (
+              <div className="flex h-64 w-64 items-center justify-center text-red-500 text-center px-4">
+                <span>{error}</span>
+              </div>
             ) : (
-              <canvas
-                ref={canvasRef}
+              <img
+                src={qrDataUrl}
+                alt="Receive QR Code"
                 className="h-64 w-64"
               />
             )}
