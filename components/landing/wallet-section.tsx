@@ -73,20 +73,18 @@ function ReceiveModal({
   address: string
   onClose: () => void
 }) {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const [qrDataUrl, setQrDataUrl] = React.useState<string>('')
   const [isGenerating, setIsGenerating] = React.useState(true)
   const [error, setError] = React.useState<string>('')
 
   React.useEffect(() => {
     const generateQR = async () => {
-      if (!canvasRef.current) return
-
       try {
-        const { toCanvas } = await import('qrcode')
+        const qrcode = await import('qrcode')
         const eip681Url = `ethereum:${tokens[0].address}/transfer?address=${address}`
         
-        // Generate QR on canvas with orange color
-        await toCanvas(canvasRef.current, eip681Url, {
+        // Generate QR as data URL with orange color
+        const dataUrl = await qrcode.toDataURL(eip681Url, {
           width: 320,
           margin: 2,
           color: {
@@ -94,40 +92,8 @@ function ReceiveModal({
             light: '#ffffff',
           },
         })
-
-        // Add logo to center
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          const logoSize = 60
-          const centerX = (canvas.width - logoSize) / 2
-          const centerY = (canvas.height - logoSize) / 2
-
-          // Draw white background circle for logo
-          ctx.beginPath()
-          ctx.arc(canvas.width / 2, canvas.height / 2, logoSize / 2 + 4, 0, 2 * Math.PI)
-          ctx.fillStyle = '#ffffff'
-          ctx.fill()
-
-          // Load and draw logo with timeout
-          const loadLogo = new Promise<void>((resolve) => {
-            const logo = new Image()
-            logo.crossOrigin = 'anonymous'
-            logo.onload = () => {
-              ctx.drawImage(logo, centerX, centerY, logoSize, logoSize)
-              resolve()
-            }
-            logo.onerror = () => {
-              resolve() // Continue even if logo fails
-            }
-            // Timeout after 2 seconds
-            setTimeout(() => resolve(), 2000)
-            logo.src = '/lobster-logo-big.svg'
-          })
-
-          await loadLogo
-        }
         
+        setQrDataUrl(dataUrl)
         setIsGenerating(false)
       } catch (err) {
         console.error('QR generation error:', err)
@@ -159,7 +125,7 @@ function ReceiveModal({
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="mb-4 rounded-xl bg-white p-4">
+          <div className="mb-4 rounded-xl bg-white p-4 relative">
             {isGenerating ? (
               <div className="flex h-64 w-64 items-center justify-center">
                 <span className="text-muted-foreground">Generating...</span>
@@ -169,10 +135,27 @@ function ReceiveModal({
                 <span>{error}</span>
               </div>
             ) : (
-              <canvas
-                ref={canvasRef}
-                className="h-64 w-64"
-              />
+              <div className="relative h-64 w-64">
+                <img
+                  src={qrDataUrl}
+                  alt="Receive QR Code"
+                  className="h-64 w-64"
+                />
+                {/* Logo overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <img 
+                      src="/lobster-logo-big.svg" 
+                      alt="Logo" 
+                      className="w-12 h-12"
+                      onError={(e) => {
+                        // Hide logo if it fails to load
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
