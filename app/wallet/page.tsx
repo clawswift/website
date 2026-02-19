@@ -23,7 +23,8 @@ import {
   Fingerprint,
   Wallet,
   Download,
-  ExternalLink
+  ExternalLink,
+  Bell
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
@@ -482,6 +483,109 @@ export default function WalletPage() {
     setMounted(true)
   }, [])
 
+  // WebSocket for incoming transfer notifications
+  const [incomingTx, setIncomingTx] = React.useState<{
+    hash: string
+    amount: string
+    symbol: string
+  } | null>(null)
+  const wsRef = React.useRef<WebSocket | null>(null)
+  const seenTxRef = React.useRef<Set<string>>(new Set())
+
+  // Play notification sound
+  const playBeep = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+      oscillator.frequency.value = 800
+      oscillator.type = 'sine'
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.3)
+    } catch {
+      // Ignore audio errors
+    }
+  }
+
+  React.useEffect(() => {
+    if (!address) return
+
+    const wsUrl = 'wss://exp.clawswift.net/ws'
+    const ws = new WebSocket(wsUrl)
+    wsRef.current = ws
+
+    ws.onopen = () => {
+      // Subscribe to ERC20 Transfer events for the token
+      // Transfer event signature: keccak256("Transfer(address,address,uint256)")
+      const transferEventSignature = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+      const addressPadded = `0x${address.toLowerCase().slice(2).padStart(64, '0')}`
+
+      ws.send(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_subscribe',
+          params: [
+            'logs',
+            {
+              address: tokens[0].address,
+              topics: [
+                transferEventSignature, // Event signature
+                null, // From: any
+                addressPadded, // To: our address
+              ],
+            },
+          ],
+        }),
+      )
+    }
+
+    ws.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.method === 'eth_subscription' && data.params?.result) {
+          const log = data.params.result
+          const txHash = log.transactionHash
+
+          if (!seenTxRef.current.has(txHash)) {
+            seenTxRef.current.add(txHash)
+
+            // Decode amount from data (uint256 at position 0)
+            const amountHex = log.data
+            const amount = formatUnits(BigInt(amountHex), tokenDecimals)
+
+            setIncomingTx({
+              hash: txHash,
+              amount: Number(amount).toFixed(4),
+              symbol: tokenSymbol,
+            })
+            playBeep()
+
+            // Clear notification after 10 seconds
+            setTimeout(() => {
+              setIncomingTx(null)
+            }, 10000)
+          }
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+
+    ws.onerror = () => {
+      // Ignore WebSocket errors
+    }
+
+    return () => {
+      ws.close()
+      wsRef.current = null
+    }
+  }, [address, tokenDecimals, tokenSymbol])
+
   // Save QR as PNG
   const handleSaveQR = async () => {
     if (!address) return
@@ -628,6 +732,27 @@ export default function WalletPage() {
           ) : (
             // Connected State
             <div className="space-y-6">
+              {/* Incoming Transfer Notification */}
+              {incomingTx && (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Bell className="h-5 w-5 text-green-600" />
+                    <span className="font-semibold text-green-700">Received!</span>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600 mb-1">
+                    +{incomingTx.amount} {incomingTx.symbol}
+                  </div>
+                  <a
+                    href={`https://exp.clawswift.net/tx/${incomingTx.hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-claw-indigo hover:underline"
+                  >
+                    View Transaction ↗
+                  </a>
+                </div>
+              )}
+
               {/* Wallet Card */}
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 {/* Address */}
@@ -673,7 +798,13 @@ export default function WalletPage() {
               {/* Receive Section */}
               {qrDataUrl && (
                 <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 text-center">Receive {tokenSymbol}</h3>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-center">Receive {tokenSymbol}</h3>
+                    <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Listening for incoming transfers" />
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground mb-4">
+                    Scan to send. You&apos;ll be notified when tokens arrive.
+                  </p>
                   
                   <div className="flex flex-col items-center">
                     <div className="relative mb-4">
