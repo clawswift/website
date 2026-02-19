@@ -19,17 +19,17 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        <a href="#" className="flex items-center gap-2 min-w-0 flex-shrink-0">
           <Image 
             src="/lobster-logo-big.svg" 
             alt="Clawswift" 
             width={36} 
             height={36} 
-            className="h-9 w-9"
+            className="h-9 w-9 flex-shrink-0"
           />
-          <span className="text-xl font-bold tracking-tight text-foreground">
+          <span className="text-xl font-bold tracking-tight text-foreground hidden sm:block">
             Clawswift
           </span>
         </a>
@@ -65,7 +65,7 @@ export function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="text-muted-foreground md:hidden"
+          className="text-muted-foreground md:hidden flex-shrink-0 p-2 -mr-2"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
         >
