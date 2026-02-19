@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Menu, X, Zap } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -18,9 +19,13 @@ export function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-claw-indigo-subtle text-claw-indigo">
-            <Zap className="h-5 w-5" />
-          </div>
+          <Image 
+            src="/lobster-logo-big.svg" 
+            alt="Clawswift" 
+            width={36} 
+            height={36} 
+            className="h-9 w-9"
+          />
           <span className="text-xl font-bold tracking-tight text-foreground">
             Clawswift
           </span>

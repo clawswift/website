@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react"
+import Image from "next/image"
 
 const footerLinks = [
   {
@@ -46,9 +46,13 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <a href="#" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-claw-indigo-subtle text-claw-indigo">
-                <Zap className="h-4 w-4" />
-              </div>
+              <Image 
+                src="/lobster-logo-big.svg" 
+                alt="Clawswift" 
+                width={32} 
+                height={32} 
+                className="h-8 w-8"
+              />
               <span className="text-lg font-bold text-foreground">
                 Clawswift
               </span>

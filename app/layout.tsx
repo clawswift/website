@@ -18,6 +18,14 @@ export const metadata: Metadata = {
   description:
     'Empowering OpenClaw to send and receive value instantly. The first blockchain payment infrastructure built for the agent-to-agent economy.',
   keywords: ['blockchain', 'AI agents', 'payments', 'OpenClaw', 'Web3', 'fintech', 'autonomous economy'],
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     title: 'Clawswift - Beyond Talk, Swift Action.',
     description: 'The first blockchain payment infrastructure built for the agent-to-agent economy.',
@@ -28,7 +36,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
+  themeColor: '#f26641',
 }
 
 export default function RootLayout({
