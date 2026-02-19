@@ -1,8 +1,9 @@
 import { QueryClient } from '@tanstack/react-query'
-import { http, createConfig, createConnector } from 'wagmi'
-import { clawswiftPasskeyConnector } from './clawswift-connector'
+import { http, createConfig } from 'wagmi'
+import { KeyManager, webAuthn } from 'wagmi/tempo'
 
 const CLAWSWIFT_RPC = 'https://exp.clawswift.net/rpc'
+const KEY_MANAGER_URL = 'https://key-manager.tokenine.workers.dev'
 
 // ClawSwift Blockchain configuration (Chain ID: 7441)
 export const clawswiftChain = {
@@ -21,8 +22,20 @@ export const clawswiftChain = {
 export const queryClient = new QueryClient()
 
 export const config = createConfig({
+  connectors: [
+    webAuthn({
+      keyManager: KeyManager.http(KEY_MANAGER_URL),
+      // Force platform authenticator (Touch ID/Face ID) - no QR code
+      createOptions: {
+        // @ts-expect-error - authenticatorSelection is supported at runtime
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+        },
+      },
+    }),
+  ],
   chains: [clawswiftChain],
-  connectors: [clawswiftPasskeyConnector()],
   transports: {
     [clawswiftChain.id]: http(CLAWSWIFT_RPC),
   },

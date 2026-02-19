@@ -60,6 +60,7 @@
     "recharts": "2.15.0",
     "sonner": "^1.7.1",
     "tailwind-merge": "^3.3.1",
+    "tempo.ts": "^0.14.0",
     "vaul": "^1.1.2",
     "viem": "^2.46.2",
     "wagmi": "^3.5.0",

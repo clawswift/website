@@ -6,14 +6,14 @@ import { Scanner } from '@yudiel/react-qr-scanner'
 import {
   useAccount,
   useConnect,
+  useConnectors,
   useDisconnect,
   useReadContract,
   useWriteContract,
 } from 'wagmi'
 import { formatUnits, parseUnits, isAddress } from 'viem'
-import { Wallet, Send, QrCode, LogOut, Copy, Check, Shield, Fingerprint, Plus } from "lucide-react"
+import { Wallet, Send, QrCode, LogOut, Copy, Check, Shield, Fingerprint } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { hasWallet, registerPasskey, authenticatePasskey, clearWallet } from '@/lib/clawswift-connector'
 
 const erc20Abi = [
   {
@@ -181,13 +181,17 @@ function CopyAddressButton({ address }: { address: string }) {
 function SendModal({
   address,
   onClose,
+  initialRecipient = '',
+  initialAmount = '',
 }: {
   address: string
   onClose: () => void
+  initialRecipient?: string
+  initialAmount?: string
 }) {
   const [selectedToken, setSelectedToken] = React.useState<Token>(tokens[0])
-  const [recipient, setRecipient] = React.useState('')
-  const [amount, setAmount] = React.useState('')
+  const [recipient, setRecipient] = React.useState(initialRecipient)
+  const [amount, setAmount] = React.useState(initialAmount)
   const [error, setError] = React.useState('')
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [showScanner, setShowScanner] = React.useState(false)
@@ -340,9 +344,19 @@ function SendModal({
                             const queryString = transferMatch[2]
                             const params = new URLSearchParams(queryString)
                             const recipientAddress = params.get('address')
+                            const amountParam = params.get('uint256')
 
                             if (recipientAddress && isAddress(recipientAddress)) {
                               setRecipient(recipientAddress)
+                              if (amountParam) {
+                                try {
+                                  const amountBigInt = BigInt(amountParam)
+                                  const amountFormatted = formatUnits(amountBigInt, selectedToken.decimals)
+                                  setAmount(amountFormatted)
+                                } catch {
+                                  // ignore
+                                }
+                              }
                               setShowScanner(false)
                             }
                           } else {
@@ -410,49 +424,73 @@ function SendModal({
 export function WalletSection() {
   const [showReceive, setShowReceive] = React.useState(false)
   const [showSend, setShowSend] = React.useState(false)
-  const [walletExists, setWalletExists] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [error, setError] = React.useState('')
+  const [initialRecipient, setInitialRecipient] = React.useState('')
+  const [initialAmount, setInitialAmount] = React.useState('')
+  const [isConnecting, setIsConnecting] = React.useState(false)
 
   const { address, isConnected } = useAccount()
-  const { connect, isPending: isConnecting } = useConnect()
+  const { connect, isPending: isConnectPending } = useConnect()
   const { disconnect } = useDisconnect()
+  const connectors = useConnectors()
 
-  React.useEffect(() => {
-    setWalletExists(hasWallet())
-  }, [isConnected])
+  // Find webAuthn connector
+  const webAuthnConnector = React.useMemo(
+    () => connectors.find((connector) => connector.id === 'webAuthn'),
+    [connectors]
+  )
 
-  const handleCreateWallet = async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      await registerPasskey()
-      await connect({ connector: undefined })
-      setWalletExists(true)
-    } catch (err: any) {
-      setError(err.message || 'Failed to create wallet')
-    } finally {
-      setIsLoading(false)
-    }
+  // Handle connect/sign in flow
+  const handleConnect = () => {
+    if (!webAuthnConnector) return
+    setIsConnecting(true)
+
+    // Try sign in first - if no credential, will auto create
+    connect.connect(
+      { connector: webAuthnConnector },
+      {
+        onError: (error) => {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error)
+
+          // User cancelled - stop
+          if (
+            errorMessage.toLowerCase().includes('cancel') ||
+            errorMessage.toLowerCase().includes('abort')
+          ) {
+            setIsConnecting(false)
+            return
+          }
+
+          // No credential found - auto create new wallet
+          if (
+            errorMessage.toLowerCase().includes('credential') ||
+            errorMessage.toLowerCase().includes('not found') ||
+            errorMessage.toLowerCase().includes('discover')
+          ) {
+            connect.connect(
+              {
+                connector: webAuthnConnector,
+                // @ts-expect-error - capabilities is supported at runtime
+                capabilities: { type: 'sign-up' },
+              },
+              {
+                onSettled: () => setIsConnecting(false),
+              },
+            )
+          } else {
+            setIsConnecting(false)
+          }
+        },
+        onSettled: () => setIsConnecting(false),
+      },
+    )
   }
 
-  const handleConnectWallet = async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      await authenticatePasskey()
-      await connect({ connector: undefined })
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDisconnect = () => {
-    clearWallet()
-    disconnect()
-    setWalletExists(false)
+  // Handle scan QR for send
+  const handleScan = (recipient: string, amount?: string) => {
+    setInitialRecipient(recipient)
+    if (amount) setInitialAmount(amount)
+    setShowSend(true)
   }
 
   const { data: balance } = useReadContract({
@@ -469,6 +507,8 @@ export function WalletSection() {
     if (balance === undefined || balance === null) return '0.00'
     return Number(formatUnits(balance as bigint, tokens[0].decimals)).toFixed(4)
   }, [balance])
+
+  const isLoading = isConnectPending || isConnecting
 
   return (
     <section id="wallet" className="relative px-6 py-28">
@@ -499,50 +539,24 @@ export function WalletSection() {
                 <Shield className="h-10 w-10" />
               </div>
               
-              {!walletExists ? (
-                // Create new wallet flow
-                <>
-                  <h3 className="mb-2 text-xl font-semibold">Create Your Wallet</h3>
-                  <p className="mb-6 text-sm text-muted-foreground">
-                    Create a secure wallet using your device&apos;s biometric authentication.
-                    No passwords needed - just use Touch ID or Face ID.
-                  </p>
-                  <div className="flex flex-col items-center gap-3">
-                    <Button
-                      onClick={handleCreateWallet}
-                      disabled={isLoading}
-                      className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
-                    >
-                      <Fingerprint className="h-5 w-5" />
-                      {isLoading ? 'Creating...' : 'Create Wallet with Passkey'}
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Supports Touch ID, Face ID, and Windows Hello
-                    </p>
-                  </div>
-                </>
-              ) : (
-                // Connect existing wallet flow
-                <>
-                  <h3 className="mb-2 text-xl font-semibold">Welcome Back</h3>
-                  <p className="mb-6 text-sm text-muted-foreground">
-                    Your wallet is ready. Authenticate with your biometric to access it.
-                  </p>
-                  <Button
-                    onClick={handleConnectWallet}
-                    disabled={isLoading}
-                    className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
-                  >
-                    <Fingerprint className="h-5 w-5" />
-                    {isLoading ? 'Authenticating...' : 'Unlock with Passkey'}
-                  </Button>
-                </>
-              )}
+              <h3 className="mb-2 text-xl font-semibold">
+                {isLoading ? 'Check your device...' : 'Sign in with Passkey'}
+              </h3>
+              <p className="mb-6 text-sm text-muted-foreground">
+                {isLoading 
+                  ? 'Please authenticate using your biometric' 
+                  : 'Use Touch ID, Face ID, or Windows Hello to access your wallet'}
+              </p>
               
-              {error && (
-                <div className="mt-4 rounded-md bg-red-50 px-4 py-2 text-sm text-red-600">
-                  {error}
-                </div>
+              {!isLoading && (
+                <Button
+                  onClick={handleConnect}
+                  disabled={!webAuthnConnector}
+                  className="gap-2 bg-claw-indigo px-8 hover:bg-claw-indigo-dark"
+                >
+                  <Fingerprint className="h-5 w-5" />
+                  {webAuthnConnector ? 'Sign in / Create Wallet' : 'Wallet not available'}
+                </Button>
               )}
             </div>
           ) : (
@@ -563,11 +577,11 @@ export function WalletSection() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDisconnect}
+                  onClick={() => disconnect()}
                   className="gap-2"
                 >
                   <LogOut className="h-4 w-4" />
-                  Disconnect
+                  Sign out
                 </Button>
               </div>
 
@@ -582,7 +596,11 @@ export function WalletSection() {
               {/* Action Buttons */}
               <div className="flex justify-center gap-4">
                 <Button
-                  onClick={() => setShowSend(true)}
+                  onClick={() => {
+                    setInitialRecipient('')
+                    setInitialAmount('')
+                    setShowSend(true)
+                  }}
                   className="gap-2 bg-claw-indigo hover:bg-claw-indigo-dark"
                 >
                   <Send className="h-4 w-4" />
@@ -618,7 +636,7 @@ export function WalletSection() {
             </div>
             <h4 className="mb-2 font-semibold">Non-Custodial</h4>
             <p className="text-sm text-muted-foreground">
-              You own your keys. We never store your private key on our servers.
+              You own your keys. Keys are securely managed by Key Manager service.
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card p-6 text-center">
@@ -638,7 +656,12 @@ export function WalletSection() {
         <ReceiveModal address={address} onClose={() => setShowReceive(false)} />
       )}
       {showSend && address && (
-        <SendModal address={address} onClose={() => setShowSend(false)} />
+        <SendModal 
+          address={address} 
+          onClose={() => setShowSend(false)}
+          initialRecipient={initialRecipient}
+          initialAmount={initialAmount}
+        />
       )}
     </section>
   )
