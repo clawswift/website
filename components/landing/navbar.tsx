@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
@@ -63,14 +63,26 @@ export function Navbar() {
           </Button>
         </div>
 
-        {/* Mobile Toggle */}
-        <button
-          className="text-muted-foreground md:hidden flex-shrink-0 p-2 -mr-2"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-        >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-1 md:hidden">
+          <Link href="/wallet">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-claw-indigo hover:bg-claw-indigo-subtle"
+              aria-label="Wallet"
+            >
+              <Wallet className="h-5 w-5" />
+            </Button>
+          </Link>
+          <button
+            className="text-muted-foreground flex-shrink-0 p-2 -mr-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Menu */}
